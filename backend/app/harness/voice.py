@@ -67,13 +67,25 @@ class SarvamVoice:
     # Speech to text
     # ------------------------------------------------------------------
 
+    # Sarvam accepts only MP3 and WAV — WebM/Opus, which is what browsers
+    # record by default, is rejected with a 400. The frontend converts to WAV
+    # before upload; these defaults match that, and anything else is
+    # normalized below so a mislabelled content type cannot cause a rejection.
+    ACCEPTED_CONTENT_TYPES = frozenset(
+        {
+            "audio/mpeg", "audio/mp3", "audio/mpeg3", "audio/x-mpeg-3",
+            "audio/x-mp3", "audio/wav", "audio/x-wav", "audio/wave",
+            "audio/pcm_s16le",
+        }
+    )
+
     async def transcribe(
         self,
         audio_bytes: bytes,
         *,
         language: str | None = None,
-        filename: str = "audio.webm",
-        content_type: str = "audio/webm",
+        filename: str = "audio.wav",
+        content_type: str = "audio/wav",
     ) -> TranscriptionResult:
         """Transcribe audio.
 
@@ -98,8 +110,18 @@ class SarvamVoice:
         # "unknown" is Sarvam's auto-detect sentinel.
         locale = sarvam_locale_for(language) if language else "unknown"
 
+        # Reject the unsupported container here rather than paying a network
+        # round trip to learn the same thing from Sarvam's 400.
+        normalized_type = content_type.split(";")[0].strip().lower()
+        if normalized_type not in self.ACCEPTED_CONTENT_TYPES:
+            raise VoiceError(
+                f"Audio format {normalized_type!r} is not supported by Sarvam. "
+                "Convert to WAV or MP3 before upload — browsers record WebM/Opus "
+                "by default, which Sarvam rejects."
+            )
+
         data: dict[str, str] = {"model": self.stt_model, "language_code": locale}
-        files = {"file": (filename, audio_bytes, content_type)}
+        files = {"file": (filename, audio_bytes, normalized_type)}
 
         try:
             async with httpx.AsyncClient(timeout=self.settings.stt_timeout_s) as client:

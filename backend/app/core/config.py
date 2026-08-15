@@ -46,7 +46,8 @@ class Settings(BaseSettings):
     # ---------------- Speech ----------------
     sarvam_stt_url: str = "https://api.sarvam.ai/speech-to-text"
     sarvam_tts_url: str = "https://api.sarvam.ai/text-to-speech"
-    sarvam_stt_model: str = "saarika:v2"
+    # saarika:v2 is deprecated and returns a 400 pointing at v2.5.
+    sarvam_stt_model: str = "saarika:v2.5"
     sarvam_tts_model: str = "bulbul:v2"
     sarvam_tts_speaker: str = "anushka"
     stt_timeout_s: float = 15.0

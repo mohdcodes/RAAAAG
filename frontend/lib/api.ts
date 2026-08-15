@@ -17,6 +17,7 @@ import type {
   StrategyInfo,
   TranscriptionResult,
 } from "./types";
+import { toWav } from "./wav";
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -92,12 +93,25 @@ export function query(
   });
 }
 
-export function transcribe(
+/**
+ * Build the upload form, converting to WAV first.
+ *
+ * MediaRecorder gives us WebM/Opus, which Sarvam rejects outright — it accepts
+ * only MP3 and WAV. Conversion happens client-side so the server never has to
+ * carry an audio-transcoding dependency.
+ */
+async function audioForm(audio: Blob): Promise<FormData> {
+  const wav = await toWav(audio);
+  const form = new FormData();
+  form.append("file", wav, "recording.wav");
+  return form;
+}
+
+export async function transcribe(
   audio: Blob,
   language?: string | null,
 ): Promise<TranscriptionResult> {
-  const form = new FormData();
-  form.append("file", audio, "recording.webm");
+  const form = await audioForm(audio);
   if (language) form.append("language", language);
   return request<TranscriptionResult>("/api/voice/transcribe", {
     method: "POST",
@@ -106,12 +120,11 @@ export function transcribe(
 }
 
 /** Transcribe and answer in one round trip — saves a hop on slow connections. */
-export function voiceAsk(
+export async function voiceAsk(
   audio: Blob,
   options: { language?: string | null; scope?: RetrievalScope; topK?: number } = {},
 ): Promise<{ transcription: TranscriptionResult; response: AnswerResponse }> {
-  const form = new FormData();
-  form.append("file", audio, "recording.webm");
+  const form = await audioForm(audio);
   if (options.language) form.append("language", options.language);
   form.append("scope", options.scope ?? "all");
   form.append("top_k", String(options.topK ?? 5));
