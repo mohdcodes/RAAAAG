@@ -19,8 +19,17 @@ import type {
 } from "./types";
 import { toWav } from "./wav";
 
+/**
+ * API origin.
+ *
+ * Empty string means same-origin: in the deployed stack Caddy proxies /api to
+ * the backend, so the browser calls the host it already loaded the page from
+ * and nothing is hardcoded to an IP that will change. Locally it points at
+ * 127.0.0.1 rather than "localhost" — on Windows the latter resolves to IPv6
+ * ::1 first and pays a fallback timeout on every request.
+ */
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 export class ApiError extends Error {
   constructor(

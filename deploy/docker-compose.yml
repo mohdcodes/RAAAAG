@@ -1,0 +1,83 @@
+# Production stack for the Oracle Cloud VM (ARM64, 4 cores, 24GB).
+#
+#   docker compose up -d --build
+#
+# No Qdrant service: FAISS runs inside the API process and reads its index from
+# a mounted volume, so there is one less container to operate and no network
+# hop on the query path.
+
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: raaaaag-api
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      VECTOR_BACKEND: faiss
+      SARVAM_API_KEY: ${SARVAM_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Same-origin through Caddy, so the browser's Origin is the public host.
+      CORS_ORIGINS: '["http://${PUBLIC_HOST}","https://${PUBLIC_HOST}","http://localhost:3000"]'
+      RATE_LIMIT_ENABLED: "true"
+      RATE_LIMIT_PER_MINUTE: "20"
+      GLOBAL_DAILY_CAP: "5000"
+      KMP_DUPLICATE_LIB_OK: "TRUE"
+      # 4 cores: leave one for Caddy and the Next.js server.
+      OMP_NUM_THREADS: "3"
+    volumes:
+      # The prebuilt FAISS index, uploaded by deploy.sh.
+      - ../data:/app/data
+      - model_cache:/models
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  web:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        # Relative path, not an absolute URL: the browser calls the same origin
+        # it loaded the page from, and Caddy routes /api to the API container.
+        # Hardcoding a host here would break the moment the IP or domain
+        # changes, since Next.js inlines NEXT_PUBLIC_* at build time.
+        NEXT_PUBLIC_API_URL: ""
+    container_name: raaaaag-web
+    restart: unless-stopped
+    expose:
+      - "3000"
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: raaaaag-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+
+volumes:
+  model_cache:
+  caddy_data:
+  caddy_config:
