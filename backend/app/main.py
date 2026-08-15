@@ -8,6 +8,16 @@ drain the account.
 
 from __future__ import annotations
 
+import os
+
+# FAISS and PyTorch each bundle their own OpenMP runtime. On Windows, loading
+# both aborts the process ("multiple copies of the OpenMP runtime"). This must
+# be set before either library is imported, hence its position above every
+# other import. Threads are pinned to one OpenMP runtime below to avoid the
+# oversubscription this flag would otherwise permit.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+os.environ.setdefault("OMP_NUM_THREADS", str(max(1, (os.cpu_count() or 2) - 1)))
+
 import time
 from contextlib import asynccontextmanager
 

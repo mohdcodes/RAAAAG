@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 /*
- * Design language: a retrieval *console*, not a chat app.
+ * An instrument panel, not a chat app.
  *
- * Dense, instrument-like, monospace for anything numeric — the point of this
- * UI is to expose what the pipeline is doing (timings, scores, guardrail
- * verdicts), so it reads closer to a debugger than to a messaging surface.
+ * The page's job is to show what the pipeline did: what was retrieved, what
+ * the model made of it, and how long each part took. So numbers get the
+ * typographic emphasis and prose gets almost none — labels are single words
+ * wherever a single word will do.
  *
- * Ubuntu for text, Ubuntu Mono for data. Self-hosted rather than CDN-loaded so
- * the deployment has no external font dependency.
+ * Ubuntu for text and Ubuntu Mono for every figure, since digits that shift
+ * width between frames make a live readout unreadable.
  */
 
 @font-face {
   font-family: "Ubuntu";
   font-style: normal;
-  font-weight: 300 700;
+  font-weight: 400;
   font-display: swap;
   src: url("/fonts/Ubuntu-Regular.ttf") format("truetype");
 }
@@ -35,45 +36,88 @@
 @font-face {
   font-family: "Ubuntu Mono";
   font-style: normal;
-  font-weight: 400 700;
+  font-weight: 400;
   font-display: swap;
   src: url("/fonts/UbuntuMono-Regular.ttf") format("truetype");
 }
 
 @theme {
   --font-sans: "Ubuntu", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Ubuntu Mono", ui-monospace, "Cascadia Code", monospace;
+  --font-mono: "Ubuntu Mono", ui-monospace, monospace;
 }
 
+/* Light is the default; the dark blocks below redefine only the tokens. */
 :root {
-  /* Deep slate base — cooler and darker than a typical chat surface, so the
-     accent colours used for scores and verdicts stay legible. */
-  --bg: #0b0f14;
-  --bg-raised: #111820;
-  --bg-overlay: #16202b;
-  --bg-input: #0d141b;
+  --bg: #fbfbfa;
+  --panel: #ffffff;
+  --sunken: #f4f4f2;
+  --line: #e6e5e1;
+  --line-firm: #d3d2cc;
 
-  --border: #1e2b38;
-  --border-strong: #2a3b4d;
+  --ink: #17181a;
+  --ink-soft: #5f6166;
+  --ink-faint: #97999f;
 
-  --text: #e6edf3;
-  --text-muted: #8b9bab;
-  --text-dim: #5c6b7a;
+  /* Single accent: a deep ink-blue. Everything else stays neutral so the
+     semantic colours below never have to compete with it. */
+  --accent: #2f5fd4;
+  --accent-soft: #eaf0fd;
 
-  /* Amber primary: distinct from the blue/purple of most AI chat products,
-     and it reads as "instrumentation" rather than "assistant". */
-  --accent: #f0883e;
-  --accent-hover: #ff9f57;
-  --accent-dim: #7a4520;
+  --ok: #17803d;
+  --warn: #b45309;
+  --bad: #c0332e;
+  --ok-soft: #e7f5ec;
+  --warn-soft: #fdf2e3;
+  --bad-soft: #fbeceb;
 
-  --cyan: #3fb9c9;
-  --green: #3fb950;
-  --yellow: #d29922;
-  --red: #f85149;
-  --purple: #a371f7;
+  --r: 8px;
+  --r-sm: 5px;
+}
 
-  --radius: 6px;
-  --radius-lg: 10px;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1013;
+    --panel: #16191e;
+    --sunken: #1b1f25;
+    --line: #262b33;
+    --line-firm: #333a44;
+
+    --ink: #e8eaed;
+    --ink-soft: #9aa0aa;
+    --ink-faint: #6b7280;
+
+    --accent: #6c9bff;
+    --accent-soft: #1a2540;
+
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --ok-soft: #14281c;
+    --warn-soft: #2a2010;
+    --bad-soft: #2b1616;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e1013;
+  --panel: #16191e;
+  --sunken: #1b1f25;
+  --line: #262b33;
+  --line-firm: #333a44;
+
+  --ink: #e8eaed;
+  --ink-soft: #9aa0aa;
+  --ink-faint: #6b7280;
+
+  --accent: #6c9bff;
+  --accent-soft: #1a2540;
+
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --ok-soft: #14281c;
+  --warn-soft: #2a2010;
+  --bad-soft: #2b1616;
 }
 
 * {
@@ -90,34 +134,26 @@ body {
 
 body {
   background: var(--bg);
-  color: var(--text);
+  color: var(--ink);
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow: hidden; /* panes scroll independently */
+  overflow: hidden;
 }
 
-/* Slim scrollbars so dense panes do not lose width to chrome. */
 ::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 5px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3a4f63;
-}
-
-::selection {
-  background: var(--accent-dim);
-  color: var(--text);
+  background: var(--line-firm);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 6px;
 }
 
 :focus-visible {
@@ -125,74 +161,75 @@ body {
   outline-offset: 2px;
 }
 
-@keyframes pulse-record {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.75;
-    transform: scale(1.06);
-  }
+/* Every figure in the UI uses this: fixed-width digits stop numbers from
+   jittering as they update. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
-@keyframes slide-up {
+/* Indic scripts have taller ascenders and need more leading than Latin. */
+.indic {
+  line-height: 1.8;
+}
+
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
-@keyframes shimmer {
-  0% {
-    background-position: -300px 0;
-  }
+@keyframes breathe {
+  0%,
   100% {
-    background-position: 300px 0;
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
   }
 }
-
-@keyframes spin {
+@keyframes sweep {
+  to {
+    background-position: 200% 0;
+  }
+}
+@keyframes turn {
   to {
     transform: rotate(360deg);
   }
 }
 
-.animate-slide-up {
-  animation: slide-up 0.18s ease-out;
+.rise {
+  animation: rise 0.16s ease-out;
+}
+.breathe {
+  animation: breathe 1.4s ease-in-out infinite;
+}
+.turn {
+  animation: turn 0.8s linear infinite;
 }
 
-.animate-pulse-record {
-  animation: pulse-record 1.3s ease-in-out infinite;
-}
-
-.animate-spin-slow {
-  animation: spin 1s linear infinite;
-}
-
-.shimmer {
+.skeleton {
   background: linear-gradient(
     90deg,
-    var(--bg-raised) 25%,
-    var(--bg-overlay) 50%,
-    var(--bg-raised) 75%
+    var(--sunken) 30%,
+    var(--line) 50%,
+    var(--sunken) 70%
   );
-  background-size: 600px 100%;
-  animation: shimmer 1.4s infinite linear;
+  background-size: 200% 100%;
+  animation: sweep 1.3s infinite linear;
 }
 
-/* Indic scripts sit lower and need more leading than Latin at the same size. */
-.indic {
-  line-height: 1.85;
-  font-size: 1.02em;
-}
-
-.tabular {
-  font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

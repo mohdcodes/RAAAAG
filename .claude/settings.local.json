@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s --max-time 150 -X POST http://127.0.0.1:8000/api/query -H \"Content-Type: application/json\" -d '{\"text\":\"what is a corporation?\",\"top_k\":5}')",
+      "Bash(echo \"curl=$? size=$\\(wc -c < resp.json\\)\")"
+    ]
+  }
+}

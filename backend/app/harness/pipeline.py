@@ -83,9 +83,14 @@ class RAGPipeline:
     @property
     def vector_store(self):
         if self._vector_store is None:
-            from app.retrieval.vector_store import get_vector_store
+            if self.settings.vector_backend == "faiss":
+                from app.retrieval.faiss_store import get_faiss_store
 
-            self._vector_store = get_vector_store()
+                self._vector_store = get_faiss_store()
+            else:
+                from app.retrieval.vector_store import get_vector_store
+
+                self._vector_store = get_vector_store()
         return self._vector_store
 
     @property

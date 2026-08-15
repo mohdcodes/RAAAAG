@@ -164,6 +164,8 @@ export interface DatasetStats {
     name?: string;
     binary_quantization?: boolean;
     dimension?: number;
+    /** "faiss" | "qdrant" */
+    backend?: string;
     error?: string;
   };
   dataset: {

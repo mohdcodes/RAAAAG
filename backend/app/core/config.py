@@ -82,9 +82,18 @@ class Settings(BaseSettings):
     embedding_query_prefix: str = "query: "
     embedding_passage_prefix: str = "passage: "
 
+    # ---------------- Vector backend ----------------
+    # FAISS runs in-process: no server, no Docker, and no network hop on the
+    # query path — which is the largest remaining latency term after embedding.
+    vector_backend: str = "faiss"  # "faiss" | "qdrant"
+
     # ---------------- Reranking ----------------
+    # bge-reranker-v2-m3 is 2.2GB and costs ~40-60ms per query on CPU. It
+    # measurably improves ordering, but it is off by default so a fresh
+    # checkout answers its first query in seconds rather than after a long
+    # model download. Turn on with RERANK_ENABLED=true.
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
-    rerank_enabled: bool = True
+    rerank_enabled: bool = False
     rerank_candidates: int = 50
     rerank_batch_size: int = 16
 
