@@ -2,15 +2,14 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "VoiceRAG — MSMARCO-XI",
+  title: "RAAAAAG !!",
   description:
-    "Voice-enabled cross-lingual retrieval-augmented generation over " +
-    "ai4bharat/MSMARCO-XI, with per-stage latency instrumentation and " +
-    "four-layer guardrails.",
+    "Voice retrieval over MSMARCO-XI across 14 Indic languages. " +
+    "Developed by BrBik for Hacker House Goa.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0f14",
+  themeColor: "#0a3327",
   width: "device-width",
   initialScale: 1,
 };

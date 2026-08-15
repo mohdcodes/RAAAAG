@@ -113,7 +113,7 @@ class Settings(BaseSettings):
     hnsw_ef_search: int = 128
 
     # ---------------- Retrieval ----------------
-    retrieval_top_k: int = 10
+    retrieval_top_k: int = 5
     retrieval_candidates: int = 200  # pre-rerank pool
     hybrid_search: bool = True
     hybrid_alpha: float = 0.7  # weight on dense vs sparse

@@ -36,12 +36,15 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col">
-      <header className="flex shrink-0 items-center gap-5 border-b border-[var(--line)] bg-[var(--panel)] px-5 py-2.5">
-        <span className="text-[14px] font-medium tracking-tight text-[var(--ink)]">
-          Voice<span className="text-[var(--accent)]">RAG</span>
-        </span>
+      <header className="flex shrink-0 items-center gap-5 border-b border-[var(--line)] px-5 py-3">
+        <div className="flex items-baseline gap-2.5">
+          <span className="text-[16px] font-bold tracking-tight text-[var(--cream)]">
+            RAAAAAG<span className="text-[var(--gold)]">&nbsp;!!</span>
+          </span>
+          <span className="eyebrow hidden sm:inline">Hacker House Goa</span>
+        </div>
 
-        <nav className="flex gap-0.5">
+        <nav className="flex gap-1">
           {(
             [
               ["chat", "Chat"],
@@ -53,10 +56,10 @@ export default function Home() {
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className="rounded-[var(--r-sm)] px-2.5 py-1 text-[13px] transition-colors"
+              className="rounded-[var(--r-pill)] px-3 py-1 text-[13px] transition-colors"
               style={{
-                background: tab === id ? "var(--sunken)" : "transparent",
-                color: tab === id ? "var(--ink)" : "var(--ink-faint)",
+                background: tab === id ? "var(--forest)" : "transparent",
+                color: tab === id ? "var(--cream)" : "var(--cream-faint)",
               }}
             >
               {label}
@@ -66,9 +69,12 @@ export default function Home() {
 
         <span className="flex-1" />
 
+        <span className="eyebrow hidden md:inline">by BrBik</span>
         <span
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ background: ok ? "var(--ok)" : down ? "var(--bad)" : "var(--warn)" }}
+          className="h-2 w-2 rounded-full"
+          style={{
+            background: ok ? "var(--ok)" : down ? "var(--bad)" : "var(--warn)",
+          }}
           title={down ? "API unreachable" : ok ? "ready" : "degraded"}
         />
       </header>

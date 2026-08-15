@@ -203,7 +203,7 @@ class QueryRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
     language: str | None = Field(default=None, description="Auto-detected if omitted")
     scope: RetrievalScope = RetrievalScope.ALL_LANGUAGES
-    top_k: int = Field(default=10, ge=1, le=50)
+    top_k: int = Field(default=5, ge=1, le=50)
     strategy: str | None = None
     include_debug: bool = True
 

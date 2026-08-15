@@ -97,7 +97,7 @@ export function Metrics() {
         </div>
 
         {samples === 0 && (
-          <p className="rounded-[var(--r)] border border-[var(--line)] bg-[var(--panel)] px-3 py-2.5 text-[12.5px] text-[var(--ink-faint)]">
+          <p className="rounded-[var(--r)] border border-[var(--line)] bg-[var(--panel)] px-3 py-2.5 text-[12.5px] text-[var(--cream-faint)]">
             Run a few queries to populate these.
           </p>
         )}
@@ -107,7 +107,7 @@ export function Metrics() {
           <Section title="Latency" note={`${samples} queries`}>
             <table className="w-full text-[12.5px]">
               <thead>
-                <tr className="border-b border-[var(--line)] text-[var(--ink-faint)]">
+                <tr className="border-b border-[var(--line)] text-[var(--cream-faint)]">
                   <th className="py-1.5 pr-2 text-left font-normal">stage</th>
                   {["p50", "p70", "p90", "p95", "p100", "mean"].map((h) => (
                     <th key={h} className="px-2 py-1.5 text-right font-normal">
@@ -130,7 +130,7 @@ export function Metrics() {
                       <td
                         className="py-1.5 pr-2"
                         style={{
-                          color: external ? "var(--ink-faint)" : "var(--ink-soft)",
+                          color: external ? "var(--cream-faint)" : "var(--cream-soft)",
                           fontWeight: isSummary ? 500 : 400,
                         }}
                       >
@@ -149,8 +149,8 @@ export function Metrics() {
                                 row.stage === "retrieval_ms" && v < 200
                                   ? "var(--ok)"
                                   : external
-                                    ? "var(--ink-faint)"
-                                    : "var(--ink)",
+                                    ? "var(--cream-faint)"
+                                    : "var(--cream)",
                             }}
                           >
                             {v.toFixed(1)}
@@ -162,7 +162,7 @@ export function Metrics() {
                 })}
               </tbody>
             </table>
-            <p className="mt-2 text-[11px] text-[var(--ink-faint)]">
+            <p className="mt-2 text-[11px] text-[var(--cream-faint)]">
               ext = third-party network call, excluded from the retrieval budget
             </p>
           </Section>
@@ -182,9 +182,9 @@ export function Metrics() {
               <Metric label="ndcg@10" value={accuracy.ndcg_at_10} />
             </div>
           ) : (
-            <p className="text-[12.5px] text-[var(--ink-faint)]">
+            <p className="text-[12.5px] text-[var(--cream-faint)]">
               Run{" "}
-              <code className="num text-[var(--accent)]">
+              <code className="num text-[var(--gold)]">
                 python scripts/evaluate.py
               </code>{" "}
               to measure against the dataset&rsquo;s relevance labels.
@@ -245,15 +245,15 @@ function Big({
       <div className="flex items-baseline gap-1">
         <span
           className="num text-[26px] leading-none"
-          style={{ color: tone === "ok" ? "var(--ok)" : "var(--ink)" }}
+          style={{ color: tone === "ok" ? "var(--ok)" : "var(--cream)" }}
         >
           {value}
         </span>
         {unit && (
-          <span className="num text-[13px] text-[var(--ink-faint)]">{unit}</span>
+          <span className="num text-[13px] text-[var(--cream-faint)]">{unit}</span>
         )}
       </div>
-      <div className="mt-1.5 text-[11px] text-[var(--ink-faint)]">{label}</div>
+      <div className="mt-1.5 text-[11px] text-[var(--cream-faint)]">{label}</div>
     </div>
   );
 }
@@ -261,8 +261,8 @@ function Big({
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-[var(--r-sm)] bg-[var(--sunken)] px-2.5 py-2">
-      <div className="num text-[17px] text-[var(--ink)]">{value.toFixed(3)}</div>
-      <div className="num text-[10px] text-[var(--ink-faint)]">{label}</div>
+      <div className="num text-[17px] text-[var(--cream)]">{value.toFixed(3)}</div>
+      <div className="num text-[10px] text-[var(--cream-faint)]">{label}</div>
     </div>
   );
 }
@@ -279,8 +279,8 @@ function Section({
   return (
     <section className="space-y-2">
       <div className="flex items-baseline gap-2">
-        <h3 className="text-[13px] font-medium text-[var(--ink)]">{title}</h3>
-        {note && <span className="num text-[11px] text-[var(--ink-faint)]">{note}</span>}
+        <h3 className="text-[13px] font-medium text-[var(--cream)]">{title}</h3>
+        {note && <span className="num text-[11px] text-[var(--cream-faint)]">{note}</span>}
       </div>
       <div className="overflow-x-auto rounded-[var(--r)] border border-[var(--line)] bg-[var(--panel)] p-3">
         {children}
@@ -297,16 +297,16 @@ function Bars({ counts }: { counts: Record<string, number> }) {
     <div className="space-y-1.5">
       {entries.map(([key, n]) => (
         <div key={key} className="flex items-center gap-2 text-[12px]">
-          <span className="w-28 shrink-0 truncate text-[var(--ink-soft)]">
+          <span className="w-28 shrink-0 truncate text-[var(--cream-soft)]">
             {key.replace(/_/g, " ")}
           </span>
           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--sunken)]">
             <div
-              className="h-full rounded-full bg-[var(--accent)]"
+              className="h-full rounded-full bg-[var(--gold)]"
               style={{ width: `${(n / max) * 100}%` }}
             />
           </div>
-          <span className="num w-8 shrink-0 text-right text-[var(--ink-faint)]">
+          <span className="num w-8 shrink-0 text-right text-[var(--cream-faint)]">
             {n}
           </span>
         </div>
@@ -318,8 +318,8 @@ function Bars({ counts }: { counts: Record<string, number> }) {
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex justify-between gap-3 border-b border-[var(--line)] py-1 last:border-0">
-      <dt className="text-[var(--ink-faint)]">{k}</dt>
-      <dd className="num truncate text-[var(--ink-soft)]">{v}</dd>
+      <dt className="text-[var(--cream-faint)]">{k}</dt>
+      <dd className="num truncate text-[var(--cream-soft)]">{v}</dd>
     </div>
   );
 }

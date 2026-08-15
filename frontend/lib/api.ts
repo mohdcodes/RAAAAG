@@ -85,7 +85,7 @@ export function query(
       text,
       language: options.language ?? null,
       scope: options.scope ?? "all",
-      top_k: options.topK ?? 10,
+      top_k: options.topK ?? 5,
       strategy: options.strategy ?? null,
       include_debug: options.includeDebug ?? true,
     }),
@@ -114,7 +114,7 @@ export function voiceAsk(
   form.append("file", audio, "recording.webm");
   if (options.language) form.append("language", options.language);
   form.append("scope", options.scope ?? "all");
-  form.append("top_k", String(options.topK ?? 10));
+  form.append("top_k", String(options.topK ?? 5));
   return request("/api/voice/ask", { method: "POST", body: form });
 }
 

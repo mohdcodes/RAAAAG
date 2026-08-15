@@ -96,7 +96,7 @@ async def voice_ask(
     file: UploadFile = File(...),
     language: str | None = Form(default=None),
     scope: str = Form(default="all"),
-    top_k: int = Form(default=10),
+    top_k: int = Form(default=5),
 ) -> dict[str, Any]:
     """Transcribe then answer in one round trip.
 

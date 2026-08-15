@@ -1,123 +1,61 @@
 @import "tailwindcss";
 
 /*
- * An instrument panel, not a chat app.
+ * RAAAAAG !! — Hacker House Goa
  *
- * The page's job is to show what the pipeline did: what was retrieved, what
- * the model made of it, and how long each part took. So numbers get the
- * typographic emphasis and prose gets almost none — labels are single words
- * wherever a single word will do.
+ * Visual language taken from the Signal Wave HH Goa site: a deep forest ground
+ * with a radial glow, cream text, gold and pink accents, Space Grotesk over
+ * JetBrains Mono. Warm and editorial rather than the usual dashboard grey.
  *
- * Ubuntu for text and Ubuntu Mono for every figure, since digits that shift
- * width between frames make a live readout unreadable.
+ * Committed single-theme: the forest ground *is* the identity, so there is no
+ * light variant. Every colour is still painted explicitly so the page never
+ * borrows the host's background.
  */
 
 @font-face {
-  font-family: "Ubuntu";
+  font-family: "Space Grotesk";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 300 700;
   font-display: swap;
-  src: url("/fonts/Ubuntu-Regular.ttf") format("truetype");
+  src: url("/fonts/SpaceGrotesk.ttf") format("truetype");
 }
 @font-face {
-  font-family: "Ubuntu";
+  font-family: "JetBrains Mono";
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/Ubuntu-Medium.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Ubuntu";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/Ubuntu-Bold.ttf") format("truetype");
-}
-@font-face {
-  font-family: "Ubuntu Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/UbuntuMono-Regular.ttf") format("truetype");
+  src: url("/fonts/JetBrainsMono.ttf") format("truetype");
 }
 
 @theme {
-  --font-sans: "Ubuntu", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Ubuntu Mono", ui-monospace, monospace;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* Light is the default; the dark blocks below redefine only the tokens. */
 :root {
-  --bg: #fbfbfa;
-  --panel: #ffffff;
-  --sunken: #f4f4f2;
-  --line: #e6e5e1;
-  --line-firm: #d3d2cc;
+  --forest-deep: #0a3327;
+  --forest: #0e4635;
+  --forest-lift: #12513c;
+  --panel: #0d4031;
+  --sunken: #093025;
 
-  --ink: #17181a;
-  --ink-soft: #5f6166;
-  --ink-faint: #97999f;
+  --cream: #f3ecdd;
+  --cream-soft: #bdb9a8;
+  --cream-faint: #7f8a7c;
 
-  /* Single accent: a deep ink-blue. Everything else stays neutral so the
-     semantic colours below never have to compete with it. */
-  --accent: #2f5fd4;
-  --accent-soft: #eaf0fd;
+  --gold: #e3b23c;
+  --pink: #e8557f;
 
-  --ok: #17803d;
-  --warn: #b45309;
-  --bad: #c0332e;
-  --ok-soft: #e7f5ec;
-  --warn-soft: #fdf2e3;
-  --bad-soft: #fbeceb;
+  --line: rgba(243, 236, 221, 0.14);
+  --line-firm: rgba(243, 236, 221, 0.26);
 
-  --r: 8px;
-  --r-sm: 5px;
-}
+  --ok: #7ec98f;
+  --warn: #e3b23c;
+  --bad: #e8557f;
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0e1013;
-    --panel: #16191e;
-    --sunken: #1b1f25;
-    --line: #262b33;
-    --line-firm: #333a44;
-
-    --ink: #e8eaed;
-    --ink-soft: #9aa0aa;
-    --ink-faint: #6b7280;
-
-    --accent: #6c9bff;
-    --accent-soft: #1a2540;
-
-    --ok: #4ade80;
-    --warn: #fbbf24;
-    --bad: #f87171;
-    --ok-soft: #14281c;
-    --warn-soft: #2a2010;
-    --bad-soft: #2b1616;
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0e1013;
-  --panel: #16191e;
-  --sunken: #1b1f25;
-  --line: #262b33;
-  --line-firm: #333a44;
-
-  --ink: #e8eaed;
-  --ink-soft: #9aa0aa;
-  --ink-faint: #6b7280;
-
-  --accent: #6c9bff;
-  --accent-soft: #1a2540;
-
-  --ok: #4ade80;
-  --warn: #fbbf24;
-  --bad: #f87171;
-  --ok-soft: #14281c;
-  --warn-soft: #2a2010;
-  --bad-soft: #2b1616;
+  --r: 12px;
+  --r-sm: 7px;
+  --r-pill: 999px;
 }
 
 * {
@@ -133,11 +71,19 @@ body {
 }
 
 body {
-  background: var(--bg);
-  color: var(--ink);
+  background: var(--forest-deep);
+  /* The off-centre glow is the site's signature — it keeps a large dark
+     surface from reading as flat. */
+  background-image: radial-gradient(
+    circle at 22% 0%,
+    var(--forest-lift) 0%,
+    var(--forest-deep) 58%
+  );
+  background-attachment: fixed;
+  color: var(--cream);
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -153,43 +99,56 @@ body {
   background: var(--line-firm);
   border: 3px solid transparent;
   background-clip: content-box;
-  border-radius: 6px;
+  border-radius: var(--r-pill);
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--forest-deep);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 
-/* Every figure in the UI uses this: fixed-width digits stop numbers from
-   jittering as they update. */
+/* Figures: fixed-width digits so live numbers do not jitter. */
 .num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-/* Indic scripts have taller ascenders and need more leading than Latin. */
+/* Uppercase micro-labels, straight from the reference site's treatment. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--cream-faint);
+}
+
+/* Indic scripts need more leading than Latin at the same size. */
 .indic {
-  line-height: 1.8;
+  line-height: 1.85;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-@keyframes breathe {
+@keyframes pulse {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.45;
+    opacity: 0.4;
   }
 }
 @keyframes sweep {
@@ -204,20 +163,19 @@ body {
 }
 
 .rise {
-  animation: rise 0.16s ease-out;
+  animation: rise 0.18s ease-out;
 }
-.breathe {
-  animation: breathe 1.4s ease-in-out infinite;
+.pulse {
+  animation: pulse 1.3s ease-in-out infinite;
 }
 .turn {
   animation: turn 0.8s linear infinite;
 }
-
 .skeleton {
   background: linear-gradient(
     90deg,
     var(--sunken) 30%,
-    var(--line) 50%,
+    var(--forest) 50%,
     var(--sunken) 70%
   );
   background-size: 200% 100%;

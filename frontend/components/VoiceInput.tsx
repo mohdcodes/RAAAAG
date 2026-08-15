@@ -1,11 +1,13 @@
 "use client";
 
 /**
- * Push-to-talk control with a live waveform.
+ * Push-to-talk with a live waveform.
  *
- * Recording is a modal state, so it takes over the composer entirely rather
- * than sitting as a small icon — the user needs unambiguous feedback that the
- * microphone is live, and an obvious way out.
+ * Recording is a modal state, so it takes over the composer rather than
+ * sitting as a small icon — a live microphone needs unambiguous feedback and
+ * an obvious way out.
+ *
+ * Speech is Sarvam end to end: saarika for transcription, bulbul for playback.
  */
 
 import { useRecorder } from "@/lib/useRecorder";
@@ -21,15 +23,15 @@ export function VoiceInput({
 }) {
   const recorder = useRecorder(onRecorded);
   const seconds = (recorder.durationMs / 1000).toFixed(1);
-  const progress = recorder.durationMs / recorder.maxDurationMs;
+  const nearLimit = recorder.durationMs / recorder.maxDurationMs > 0.8;
 
   if (!recorder.isSupported) {
     return (
       <button
         type="button"
         disabled
-        title="This browser does not support audio recording"
-        className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-[var(--border)] text-[var(--text-dim)] opacity-50"
+        title="This browser cannot record audio"
+        className="flex h-10 w-10 items-center justify-center rounded-[var(--r)] border border-[var(--line)] text-[var(--cream-faint)] opacity-50"
       >
         <MicIcon />
       </button>
@@ -45,15 +47,18 @@ export function VoiceInput({
           disabled={disabled || !sttAvailable}
           title={
             sttAvailable
-              ? "Hold to speak your question"
-              : "Voice input needs SARVAM_API_KEY in backend/.env"
+              ? "Speak your question"
+              : "Voice needs SARVAM_API_KEY in backend/.env"
           }
-          className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-[var(--border)] bg-[var(--bg-input)] text-[var(--text-muted)] transition-all hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--border)] disabled:hover:text-[var(--text-muted)]"
+          className="flex h-10 w-10 items-center justify-center rounded-[var(--r)] border border-[var(--line)] bg-[var(--sunken)] text-[var(--cream-soft)] transition-colors hover:border-[var(--gold)] hover:text-[var(--gold)] disabled:cursor-not-allowed disabled:opacity-35"
         >
           <MicIcon />
         </button>
         {recorder.error && (
-          <p className="absolute bottom-full left-0 mb-1.5 w-64 rounded-[var(--radius)] border border-[#f8514944] bg-[#f8514911] px-2 py-1 text-[11px] text-[var(--red)]">
+          <p
+            className="absolute bottom-full left-0 mb-2 w-60 rounded-[var(--r-sm)] border border-[var(--bad)] px-2 py-1 text-[11px] text-[var(--bad)]"
+            style={{ background: "rgba(232,85,127,0.12)" }}
+          >
             {recorder.error}
           </p>
         )}
@@ -62,32 +67,32 @@ export function VoiceInput({
   }
 
   return (
-    <div className="flex flex-1 items-center gap-3 rounded-[var(--radius)] border border-[var(--accent-dim)] bg-[var(--bg-input)] px-3 py-2">
-      <span className="animate-pulse-record h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--red)]" />
+    <div className="flex flex-1 items-center gap-3 rounded-[var(--r)] border border-[var(--gold)] bg-[var(--sunken)] px-3 py-2">
+      <span className="pulse h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--pink)]" />
 
       <div className="flex h-8 flex-1 items-center gap-[2px]">
-        {recorder.levels.map((level, index) => (
+        {recorder.levels.map((level, i) => (
           <div
-            key={index}
+            key={i}
             className="flex-1 rounded-full transition-[height] duration-75"
             style={{
               height: `${Math.max(3, level * 100)}%`,
               background:
                 level > 0.55
-                  ? "var(--accent)"
+                  ? "var(--gold)"
                   : level > 0.2
-                    ? "var(--accent-dim)"
-                    : "var(--border-strong)",
+                    ? "rgba(227,178,60,0.5)"
+                    : "var(--line-firm)",
             }}
           />
         ))}
       </div>
 
-      <span className="tabular shrink-0 text-[12px] text-[var(--text-muted)]">
+      <span className="num shrink-0 text-[12px] text-[var(--cream-soft)]">
         {seconds}s
-        {progress > 0.8 && (
-          <span className="ml-1 text-[var(--yellow)]">
-            / {(recorder.maxDurationMs / 1000).toFixed(0)}s
+        {nearLimit && (
+          <span className="ml-1 text-[var(--warn)]">
+            /{(recorder.maxDurationMs / 1000).toFixed(0)}
           </span>
         )}
       </span>
@@ -95,8 +100,7 @@ export function VoiceInput({
       <button
         type="button"
         onClick={recorder.cancel}
-        title="Discard recording"
-        className="shrink-0 rounded-[var(--radius)] px-2 py-1 text-[11px] text-[var(--text-dim)] transition-colors hover:bg-[var(--bg-overlay)] hover:text-[var(--red)]"
+        className="shrink-0 rounded-[var(--r-sm)] px-2 py-1 text-[11px] text-[var(--cream-faint)] transition-colors hover:text-[var(--bad)]"
       >
         Cancel
       </button>
@@ -104,7 +108,7 @@ export function VoiceInput({
       <button
         type="button"
         onClick={recorder.stop}
-        className="shrink-0 rounded-[var(--radius)] bg-[var(--accent)] px-3 py-1 text-[11px] font-medium text-[#0b0f14] transition-colors hover:bg-[var(--accent-hover)]"
+        className="shrink-0 rounded-[var(--r-pill)] bg-[var(--gold)] px-3.5 py-1 text-[11.5px] font-medium text-[var(--forest-deep)]"
       >
         Send
       </button>
@@ -115,8 +119,8 @@ export function VoiceInput({
 function MicIcon() {
   return (
     <svg
-      width="15"
-      height="15"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
