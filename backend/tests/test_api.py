@@ -168,17 +168,70 @@ class TestAnalyticsEndpoints:
 
 
 class TestVoiceEndpoints:
-    def test_transcribe_without_key_returns_503(self, client):
+    """Voice endpoints with Sarvam stubbed.
+
+    These previously asserted a failure status, which only held while no key
+    was configured — once a real SARVAM_API_KEY was present the endpoints
+    started succeeding and the tests broke. Worse, they were making live
+    network calls. Sarvam is now stubbed so the endpoints are tested for the
+    behaviour they own: mapping an unavailable provider to 503 and a provider
+    error to 502.
+    """
+
+    def test_transcribe_unavailable_maps_to_503(self, client, monkeypatch):
+        from app.api import routes
+        from app.harness.voice import VoiceUnavailable
+
+        class NoKeyVoice:
+            async def transcribe(self, *a, **k):
+                raise VoiceUnavailable("SARVAM_API_KEY is not set")
+
+        monkeypatch.setattr(routes, "get_voice", lambda: NoKeyVoice())
         response = client.post(
             "/api/voice/transcribe",
             files={"file": ("test.webm", b"fake audio bytes", "audio/webm")},
         )
-        # 503 when unconfigured, 502 if a key exists but the call fails.
-        assert response.status_code in (502, 503)
+        assert response.status_code == 503
 
-    def test_speak_without_key_returns_503(self, client):
+    def test_transcribe_provider_error_maps_to_502(self, client, monkeypatch):
+        from app.api import routes
+        from app.harness.voice import VoiceError
+
+        class FailingVoice:
+            async def transcribe(self, *a, **k):
+                raise VoiceError("Sarvam STT returned 500")
+
+        monkeypatch.setattr(routes, "get_voice", lambda: FailingVoice())
+        response = client.post(
+            "/api/voice/transcribe",
+            files={"file": ("test.webm", b"fake audio bytes", "audio/webm")},
+        )
+        assert response.status_code == 502
+
+    def test_speak_returns_audio_with_metadata(self, client, monkeypatch):
+        from app.api import routes
+
+        class WorkingVoice:
+            async def synthesize(self, text, **k):
+                return b"RIFF" + b"\x00" * 200, {"provider": "sarvam", "duration_ms": 12.3}
+
+        monkeypatch.setattr(routes, "get_voice", lambda: WorkingVoice())
         response = client.post("/api/voice/speak", json={"text": "hello", "language": "hi"})
-        assert response.status_code in (502, 503)
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "audio/wav"
+        assert "sarvam" in response.headers["X-TTS-Metadata"]
+
+    def test_speak_unavailable_maps_to_503(self, client, monkeypatch):
+        from app.api import routes
+        from app.harness.voice import VoiceUnavailable
+
+        class NoKeyVoice:
+            async def synthesize(self, *a, **k):
+                raise VoiceUnavailable("SARVAM_API_KEY is not set")
+
+        monkeypatch.setattr(routes, "get_voice", lambda: NoKeyVoice())
+        response = client.post("/api/voice/speak", json={"text": "hello", "language": "hi"})
+        assert response.status_code == 503
 
 
 class TestLatencyStore:
