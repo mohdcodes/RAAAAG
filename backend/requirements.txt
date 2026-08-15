@@ -1,0 +1,52 @@
+# --- API layer ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-multipart==0.0.20
+slowapi==0.1.9
+
+# --- Vector DB ---
+qdrant-client==1.12.2
+
+# --- Embeddings / reranking (CPU-optimized) ---
+sentence-transformers==3.3.1
+transformers==4.47.1
+torch==2.5.1
+optimum[onnxruntime]==1.23.3
+onnxruntime==1.20.1
+
+# --- Sparse retrieval (hybrid search) ---
+rank-bm25==0.2.2
+
+# --- Dataset / ingest ---
+datasets==3.2.0
+pyarrow==18.1.0
+huggingface-hub==0.27.0
+pandas==2.2.3
+numpy==1.26.4
+
+# --- LLM providers ---
+groq==0.15.0
+google-genai==0.3.0
+
+# --- HTTP / async ---
+httpx==0.28.1
+tenacity==9.0.0
+
+# --- Chunking support ---
+nltk==3.9.1
+
+# --- Observability ---
+structlog==24.4.0
+colorama==0.4.6  # required for coloured console logs on Windows
+
+# --- Eval metrics ---
+scikit-learn==1.6.0
+scipy==1.14.1
+
+# --- Testing ---
+pytest==8.3.4
+pytest-asyncio==0.25.0
+pytest-cov==6.0.0
+respx==0.22.0
