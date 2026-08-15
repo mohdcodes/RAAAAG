@@ -10,8 +10,10 @@ slowapi==0.1.9
 qdrant-client==1.12.2
 
 # --- Embeddings / reranking (CPU-optimized) ---
+# transformers is capped at <4.47.0 by optimum[onnxruntime] 1.23.3.
+# Do not bump transformers without bumping optimum to match.
 sentence-transformers==3.3.1
-transformers==4.47.1
+transformers==4.46.3
 torch==2.5.1
 optimum[onnxruntime]==1.23.3
 onnxruntime==1.20.1
