@@ -1,0 +1,67 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Data & model artifacts — large, regenerable
+data/raw/
+data/processed/
+data/index/
+data/snapshots/
+*.parquet
+*.onnx
+*.bin
+*.safetensors
+models/
+
+# Qdrant local storage
+qdrant_storage/
+
+# Benchmark & eval outputs (keep committed summaries, ignore raw runs)
+data/runs/
+*.jsonl.gz
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
