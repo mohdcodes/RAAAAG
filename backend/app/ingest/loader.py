@@ -13,6 +13,7 @@ validation file is ~460 MB and is the practical unit of work.
 from __future__ import annotations
 
 import json
+import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -69,6 +70,53 @@ class MSMarcoXILoader:
     # Row iteration
     # ------------------------------------------------------------------
 
+    def download_file(self, language: str, *, split: str = "validation") -> Path:
+        """Download one language's parquet to local disk, with resume.
+
+        Streaming was the obvious approach but does not work well here: parquet
+        row groups in this dataset are hundreds of MB, so even `limit=30` pulls
+        a quarter-gigabyte before yielding a row, and a dropped connection
+        restarts the whole thing. `hf_hub_download` resumes and caches, so a
+        broken transfer costs only the remaining bytes.
+        """
+        from huggingface_hub import hf_hub_download
+        from huggingface_hub.utils import HfHubHTTPError
+
+        lang = get_language(language)
+        if lang is None:
+            raise ValueError(f"Unknown language: {language}")
+        if split == "train" and not lang.has_train:
+            raise ValueError(
+                f"{lang.name} has no train file in this dataset — validation only."
+            )
+
+        filename = lang.train_file if split == "train" else lang.val_file
+        logger.info("downloading_file", language=lang.code, file=filename)
+
+        last_error: Exception | None = None
+        for attempt in range(1, 4):
+            try:
+                path = hf_hub_download(
+                    repo_id=self.DATASET_ID,
+                    filename=filename,
+                    repo_type="dataset",
+                    cache_dir=str(self.cache_dir) if self.cache_dir else None,
+                )
+                logger.info("download_complete", file=filename, path=path)
+                return Path(path)
+            except (HfHubHTTPError, OSError, ConnectionError) as exc:
+                last_error = exc
+                logger.warning(
+                    "download_attempt_failed",
+                    attempt=attempt, file=filename, error=str(exc)[:200],
+                )
+                if attempt < 3:
+                    time.sleep(2**attempt)
+
+        raise RuntimeError(
+            f"Failed to download {filename} after 3 attempts: {last_error}"
+        ) from last_error
+
     def iter_rows(
         self,
         language: str,
@@ -76,37 +124,33 @@ class MSMarcoXILoader:
         split: str = "validation",
         limit: int | None = None,
     ) -> Iterator[dict]:
-        """Stream rows for one language.
+        """Iterate rows for one language.
 
-        Language selection is by *filename*, not config — the dataset exposes a
-        single `default` config despite what its README claims.
+        Reads the downloaded parquet directly with pyarrow rather than going
+        through `datasets`, so `limit` genuinely stops early: batches are read
+        one row group at a time and iteration stops as soon as the limit is hit.
         """
-        from datasets import load_dataset
+        import pyarrow.parquet as pq
 
-        lang = get_language(language)
-        if lang is None:
-            raise ValueError(f"Unknown language: {language}")
-
-        if split == "train" and not lang.has_train:
-            raise ValueError(
-                f"{lang.name} has no train file in this dataset — validation only."
-            )
-
-        data_file = lang.train_file if split == "train" else lang.val_file
-        logger.info("loading_dataset", language=lang.code, file=data_file, limit=limit)
-
-        dataset = load_dataset(
-            self.DATASET_ID,
-            data_files={split: data_file},
-            split=split,
-            streaming=True,
-            cache_dir=str(self.cache_dir) if self.cache_dir else None,
+        path = self.download_file(language, split=split)
+        parquet = pq.ParquetFile(path)
+        logger.info(
+            "reading_parquet",
+            language=language,
+            rows=parquet.metadata.num_rows,
+            row_groups=parquet.num_row_groups,
+            limit=limit,
         )
 
-        for index, row in enumerate(dataset):
-            if limit is not None and index >= limit:
-                break
-            yield row
+        yielded = 0
+        # Modest batch size: rows carry ~10 nested passages each, so large
+        # batches balloon memory for no throughput gain.
+        for batch in parquet.iter_batches(batch_size=256):
+            for row in batch.to_pylist():
+                if limit is not None and yielded >= limit:
+                    return
+                yielded += 1
+                yield row
 
     # ------------------------------------------------------------------
     # Normalization

@@ -66,7 +66,9 @@ class Embedder:
         if self._num_threads:
             torch.set_num_threads(self._num_threads)
         elif os.cpu_count():
-            # Leave a core free so the API stays responsive during ingest.
+            # Torch defaults to physical-core count, which left half this
+            # machine idle. Use all but one core: measured throughput improves
+            # and one core stays free to keep the API responsive during ingest.
             torch.set_num_threads(max(1, (os.cpu_count() or 2) - 1))
 
         device = self._device or ("cuda" if torch.cuda.is_available() else "cpu")

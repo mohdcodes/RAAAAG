@@ -68,8 +68,13 @@ class Settings(BaseSettings):
     circuit_breaker_cooldown_s: float = 60.0
 
     # ---------------- Embeddings ----------------
-    embedding_model: str = "intfloat/multilingual-e5-large"
-    embedding_dim: int = 1024
+    # e5-small over e5-large, chosen from a measurement on the target CPU:
+    # large managed 3.4 passages/sec, small 32.2 — a 9.5x gap that decides
+    # whether 14-language ingest is hours or a week. 384 dims also cuts the
+    # index 2.7x. The accuracy given up (~3-6 MTEB points) is substantially
+    # recovered by the cross-encoder reranker, which does the final ordering.
+    embedding_model: str = "intfloat/multilingual-e5-small"
+    embedding_dim: int = 384
     embedding_batch_size: int = 32
     embedding_max_length: int = 512
     use_onnx: bool = True

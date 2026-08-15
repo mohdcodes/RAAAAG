@@ -65,3 +65,8 @@ desktop.ini
 # Logs
 *.log
 logs/
+
+# Local ingest working files
+backend/demo.log
+backend/ingest.log
+backend/build_demo.py
