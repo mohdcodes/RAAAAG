@@ -18,8 +18,35 @@ set -euo pipefail
 
 VM_USER="${VM_USER:-ubuntu}"
 VM_HOST="${VM_HOST:-140.238.224.158}"
-SSH_KEY="${SSH_KEY:-$HOME/.ssh/hhg_vm}"
 REMOTE_DIR="${REMOTE_DIR:-/home/$VM_USER/raaaaag}"
+
+# Locate the SSH key. Under Git Bash on Windows, $HOME is often /home/<user>
+# rather than the Windows profile, so ~/.ssh does not resolve to where
+# ssh-keygen actually wrote the key. Check the likely locations instead of
+# assuming one.
+find_key() {
+  local candidates=(
+    "${SSH_KEY:-}"
+    "$HOME/.ssh/hhg_vm"
+    "${USERPROFILE:-}/.ssh/hhg_vm"
+    "/c/Users/${USERNAME:-$USER}/.ssh/hhg_vm"
+    "/mnt/c/Users/${USERNAME:-$USER}/.ssh/hhg_vm"
+  )
+  for candidate in "${candidates[@]}"; do
+    [[ -n "$candidate" ]] || continue
+    # Windows paths arrive with backslashes; bash test needs forward slashes.
+    candidate="${candidate//\\//}"
+    [[ -f "$candidate" ]] && { printf '%s' "$candidate"; return 0; }
+  done
+  return 1
+}
+
+SSH_KEY="$(find_key)" || {
+  printf '\n\033[1;31m✗ SSH key not found.\033[0m\n' >&2
+  printf 'Looked in: $HOME/.ssh, %%USERPROFILE%%/.ssh, /c/Users/$USERNAME/.ssh\n' >&2
+  printf 'Pass it explicitly:  SSH_KEY=/c/Users/you/.ssh/hhg_vm bash deploy/deploy.sh\n\n' >&2
+  exit 1
+}
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SSH_OPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15)
@@ -31,8 +58,15 @@ remote() { ssh "${SSH_OPTS[@]}" "$VM_USER@$VM_HOST" "$@"; }
 
 # ── 1. preflight ────────────────────────────────────────────────────
 say "Checking connection to $VM_HOST"
-[[ -f "$SSH_KEY" ]] || fail "SSH key not found at $SSH_KEY (set SSH_KEY=...)"
-remote "echo ok" >/dev/null || fail "Cannot SSH to $VM_USER@$VM_HOST"
+echo "  key: $SSH_KEY"
+
+# OpenSSH refuses a key that is group/world readable. Windows-created keys
+# frequently are, and the resulting error names permissions rather than the
+# fix, so tighten it here.
+chmod 600 "$SSH_KEY" 2>/dev/null || true
+
+remote "echo ok" >/dev/null 2>&1 || fail \
+  "Cannot SSH to $VM_USER@$VM_HOST — check the key is installed on the VM and port 22 is open"
 
 ARCH="$(remote 'uname -m')"
 CORES="$(remote 'nproc')"
