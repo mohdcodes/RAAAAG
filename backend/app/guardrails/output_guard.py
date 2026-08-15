@@ -128,6 +128,12 @@ class ConfidenceGuard:
 _NUMERIC = re.compile(r"\b\d[\d,.\-/]*\b")
 _TOKEN = re.compile(r"\w+", re.UNICODE)
 
+# Citation markers the model emits — "[1]", "[2, 3]". These must be removed
+# before tokenizing: their digits are references, not factual claims, and the
+# numeric-evidence rule would otherwise read every correctly-cited answer as
+# asserting an unsupported number and refuse it.
+_CITATION_MARKER = re.compile(r"\[\s*\d+(?:\s*,\s*\d+)*\s*\]")
+
 # Hedges that signal the model is declining rather than asserting. Sentences
 # containing these are not treated as factual claims needing support.
 _HEDGE_MARKERS = (
@@ -288,7 +294,7 @@ class GroundingGuard:
         gain. Short tokens are dropped in Latin script only — Indic words are
         frequently short and meaningful.
         """
-        normalized = normalize_text(text).lower()
+        normalized = normalize_text(_CITATION_MARKER.sub(" ", text)).lower()
         weights: dict[str, float] = {}
 
         for match in _NUMERIC.finditer(normalized):

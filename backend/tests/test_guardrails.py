@@ -230,6 +230,34 @@ class TestGrounding:
         )
         assert claims and claims[0].supported
 
+    @pytest.mark.parametrize(
+        "answer",
+        [
+            "A corporation is a company recognized in law. [1]",
+            "A corporation is a company recognized in law [1, 2].",
+            "A corporation is a company recognized in law. [2]",
+        ],
+    )
+    def test_citation_markers_are_not_factual_claims(self, answer):
+        """Regression: citation markers must not read as fabricated numbers.
+
+        The numeric-evidence rule treats unsupported numbers as disqualifying.
+        Without stripping markers first, "[1]" tokenized as the number 1,
+        never matched the context, and every correctly-cited answer was
+        refused as ungrounded — the exact opposite of the intent.
+        """
+        result, claims = GroundingGuard().check(answer, [make_chunk(CONTEXT)])
+        assert claims and claims[0].supported
+        assert result.verdict is GuardrailVerdict.PASS
+
+    def test_marker_stripping_does_not_mask_real_hallucination(self):
+        """Stripping markers must not also strip genuinely fabricated numbers."""
+        _, claims = GroundingGuard().check(
+            "A corporation was first recognized in law in 1847. [1]",
+            [make_chunk(CONTEXT)],
+        )
+        assert claims and not claims[0].supported
+
     def test_refusal_is_grounded_by_definition(self):
         result, claims = GroundingGuard().check(
             "I don't know — the retrieved passages do not contain this information.",
