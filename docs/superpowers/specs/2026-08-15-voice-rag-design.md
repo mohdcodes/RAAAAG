@@ -3,7 +3,7 @@
 **Date:** 2026-08-15
 **Status:** Approved (architecture section), implementation starting
 
-## Purpose
+## Purposes
 
 A voice-first RAG system over `ai4bharat/MSMARCO-XI`. A user speaks a question in
 any of 14 Indic languages; the system transcribes it, retrieves grounded context
