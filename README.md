@@ -5,7 +5,11 @@
 **Voice-enabled, cross-lingual Retrieval-Augmented Generation over 14 Indic languages.**
 
 Ask a question by voice or text in any of 14 Indic languages, get a grounded answer with
-citations — and see every pipeline stage measured in milliseconds.
+citations — and see every pipeline stage measured in millisecond.
+
+
+
+
 
 [![Live Demo](https://img.shields.io/badge/demo-live-22c55e?style=flat-square)](https://tide-altered-when-pulse.trycloudflare.com/)
 [![Python](https://img.shields.io/badge/python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
