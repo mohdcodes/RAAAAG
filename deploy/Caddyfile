@@ -1,23 +1,17 @@
-# Reverse proxy: one public port, both services behind it.
+# Reverse proxy: one public hostname, both services behind it.
 #
-# Serving on :80 by the IP, which is what the deployment currently targets.
+# Served over HTTPS because voice input requires it — browsers block
+# getUserMedia on insecure origins, so the microphone is dead on plain HTTP no
+# matter what the app does.
 #
-# IMPORTANT — voice input needs HTTPS. Browsers block getUserMedia on insecure
-# origins (localhost excepted), so on plain HTTP the microphone button will not
-# work; text queries and TTS playback still do. To enable voice, point a domain
-# at this host and replace the `:80` line below with the bare domain name —
-# Caddy then provisions a Let's Encrypt certificate automatically, with no
-# other change required:
+# sslip.io resolves any IP-shaped hostname to that IP, so this works with no
+# registrar and no DNS record: 140-238-224-158.sslip.io already points here,
+# and Caddy provisions a Let's Encrypt certificate for it on first start.
 #
-#     rag.example.com {
-#         ...same body...
-#     }
-#
-# A free option that needs no registrar: sslip.io resolves any IP-shaped
-# hostname, so `140-238-224-158.sslip.io` points here already and Caddy can
-# certificate it.
+# To move to a real domain later, replace the hostname below and point its A
+# record at this host. Nothing else changes.
 
-:80 {
+140-238-224-158.sslip.io {
 	# API first — more specific path wins regardless of block order, but
 	# keeping it first reads in request order.
 	handle /api/* {
@@ -48,9 +42,6 @@
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
-		# Caddy sends this by default on TLS sites; suppress it on plain
-		# HTTP where it would pin browsers to a scheme that is not served.
-		-Strict-Transport-Security
 	}
 
 	log {

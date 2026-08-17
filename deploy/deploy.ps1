@@ -58,12 +58,17 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # ── 3. firewall ─────────────────────────────────────────────────────
-# Oracle images place a REJECT rule early in the INPUT chain, so opening the
-# port in the VCN Security List alone is not sufficient.
-Say "Opening port 80 on the instance"
-Remote "sudo iptables -C INPUT -p tcp --dport 80 -j ACCEPT 2>/dev/null || sudo iptables -I INPUT 6 -p tcp --dport 80 -j ACCEPT" | Out-Null
+# Oracle images place a REJECT rule early in the INPUT chain, so opening ports
+# in the VCN Security List alone is not sufficient — they must also be
+# accepted locally. Port 80 is needed even though the site is HTTPS: Let's
+# Encrypt validates over HTTP before issuing the certificate.
+Say "Opening ports 80 and 443 on the instance"
+foreach ($port in 80, 443) {
+    Remote "sudo iptables -C INPUT -p tcp --dport $port -j ACCEPT 2>/dev/null || sudo iptables -I INPUT 6 -p tcp --dport $port -j ACCEPT" | Out-Null
+    Write-Host "  iptables: $port"
+}
 Remote "sudo netfilter-persistent save 2>/dev/null || sudo sh -c 'iptables-save > /etc/iptables/rules.v4' 2>/dev/null" | Out-Null
-Write-Host "  also add an ingress rule for TCP 80 in the Oracle VCN Security List"
+Write-Host "  NOTE: also add ingress rules for TCP 80 and 443 in the Oracle VCN Security List"
 
 # ── 4. upload ───────────────────────────────────────────────────────
 Say "Uploading source"
@@ -107,7 +112,11 @@ if ($LASTEXITCODE -ne 0) { Die "Index upload failed" }
 
 Say "Uploading secrets"
 & scp @SshOpts -q $EnvFile "${Target}:$RemoteDir/.env"
-Remote "chmod 600 $RemoteDir/.env; grep -q PUBLIC_HOST $RemoteDir/.env || echo 'PUBLIC_HOST=$VmHost' >> $RemoteDir/.env" | Out-Null
+# PUBLIC_HOST feeds the API's CORS allow-list, so it must be the hostname the
+# browser actually loads — the sslip.io name, not the bare IP.
+$PublicHost = "$($VmHost.Replace('.', '-')).sslip.io"
+Remote "chmod 600 $RemoteDir/.env; sed -i '/^PUBLIC_HOST=/d' $RemoteDir/.env; echo 'PUBLIC_HOST=$PublicHost' >> $RemoteDir/.env" | Out-Null
+Write-Host "  public host: $PublicHost"
 
 # ── 5. build and start ──────────────────────────────────────────────
 Say "Building images (first run takes 10-20 min on ARM)"
@@ -136,15 +145,28 @@ if (-not $healthy) {
 Say "Deployed"
 Remote "curl -s http://localhost/api/health"
 
-$dashed = $VmHost.Replace(".", "-")
+# Certificate issuance happens on first request to the hostname and takes a
+# few seconds; a probe now also warms it so the first real visitor does not
+# wait for the ACME handshake.
+Say "Checking the public HTTPS endpoint"
+$certOk = $false
+foreach ($i in 1..12) {
+    $probe = & curl.exe -s -o NUL -w "%{http_code}" --max-time 15 "https://$PublicHost/api/health" 2>&1
+    if ($probe -eq "200") { $certOk = $true; break }
+    Start-Sleep -Seconds 5
+}
+if ($certOk) {
+    Write-Host "  certificate issued, HTTPS live" -ForegroundColor Green
+} else {
+    Write-Host "  HTTPS not answering yet - if this persists, the VCN Security List" -ForegroundColor Yellow
+    Write-Host "  is likely still blocking TCP 80/443 (Let's Encrypt validates over 80)." -ForegroundColor Yellow
+}
+
 Write-Host @"
 
-  http://$VmHost
+  https://$PublicHost
 
-  Voice input will NOT work on plain HTTP - browsers block microphone
-  access on insecure origins. To enable it, edit deploy/Caddyfile and
-  replace ":80" with $dashed.sslip.io, then re-run this script.
-  Caddy provisions the certificate automatically.
+  Voice input works over HTTPS. Text, retrieval and playback all work either way.
 
   logs:    ssh -i $SshKey $Target 'cd $RemoteDir/deploy && sudo docker compose logs -f'
   restart: ssh -i $SshKey $Target 'cd $RemoteDir/deploy && sudo docker compose restart'
